@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "790877064813",
+    "project_id": "azmo-bf9cf",
+    "storage_bucket": "azmo-bf9cf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790877064813:android:7f0d4055fd0227d306b964",
+        "android_client_info": {
+          "package_name": "eshop.seller.multivendor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "790877064813-ihq8ferl8edinpp5o8i2f6hoqun7qliv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDE8MzK1DoUyxiNGQkvM_pLUTm64DpJ4hA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "790877064813-ihq8ferl8edinpp5o8i2f6hoqun7qliv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "790877064813-796kjfhdop3n75j8gbj0kkrpvaglpi12.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "eshop.seller.multivendor"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
