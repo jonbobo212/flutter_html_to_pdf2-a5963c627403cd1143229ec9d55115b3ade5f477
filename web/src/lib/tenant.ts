@@ -1,6 +1,21 @@
 import "server-only";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { db } from "./db";
+
+/**
+ * Caching (ecosystem playbook, bus row #54): every read below goes through
+ * the Next data cache tagged `tenant:{slug}` with a 5-min TTL fallback.
+ * CMS/pipeline writes MUST call revalidateTag(tenantTag(slug)) so tenant
+ * pages regenerate only when their content actually changes (Layer 1/2).
+ * Migration to `cacheComponents` + "use cache" is planned with the template
+ * design sprint — keep tags identical when that lands.
+ */
+export function tenantTag(slug: string): string {
+  return `tenant:${slug}`;
+}
+
+const CACHE_TTL_SECONDS = 300;
 
 export type TenantType = "school" | "agency" | "language_center" | "teacher" | "influencer";
 export type TenantStatus = "draft" | "generating" | "review" | "live" | "suspended";
@@ -43,52 +58,80 @@ export interface Section {
 }
 
 export const getTenant = cache(async (slug: string): Promise<Tenant | null> => {
-  const { data, error } = await db()
-    .from("vitrina_tenants")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
-  if (error) throw new Error(`tenant lookup failed: ${error.message}`);
-  if (!data || data.status === "suspended") return null;
-  return data as Tenant;
+  const cached = unstable_cache(
+    async (): Promise<Tenant | null> => {
+      const { data, error } = await db()
+        .from("vitrina_tenants")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (error) throw new Error(`tenant lookup failed: ${error.message}`);
+      if (!data || data.status === "suspended") return null;
+      return data as Tenant;
+    },
+    ["vitrina-tenant", slug],
+    { tags: [tenantTag(slug)], revalidate: CACHE_TTL_SECONDS }
+  );
+  return cached();
 });
 
-export const getSections = cache(async (tenantId: string, page: string): Promise<Section[]> => {
-  const { data, error } = await db()
-    .from("vitrina_sections")
-    .select("id, page, kind, position, content, visible")
-    .eq("tenant_id", tenantId)
-    .eq("page", page)
-    .eq("visible", true)
-    .order("position");
-  if (error) throw new Error(`sections lookup failed: ${error.message}`);
-  return (data ?? []) as Section[];
+export const getSections = cache(async (tenant: Tenant, page: string): Promise<Section[]> => {
+  const cached = unstable_cache(
+    async (): Promise<Section[]> => {
+      const { data, error } = await db()
+        .from("vitrina_sections")
+        .select("id, page, kind, position, content, visible")
+        .eq("tenant_id", tenant.id)
+        .eq("page", page)
+        .eq("visible", true)
+        .order("position");
+      if (error) throw new Error(`sections lookup failed: ${error.message}`);
+      return (data ?? []) as Section[];
+    },
+    ["vitrina-sections", tenant.id, page],
+    { tags: [tenantTag(tenant.slug)], revalidate: CACHE_TTL_SECONDS }
+  );
+  return cached();
 });
 
-export async function getPosts(tenantId: string, kind?: Post["kind"], limit = 12): Promise<Post[]> {
-  let q = db()
-    .from("vitrina_posts")
-    .select("id, kind, title, body, cover_url, published_at")
-    .eq("tenant_id", tenantId)
-    .not("published_at", "is", null)
-    .order("published_at", { ascending: false })
-    .limit(limit);
-  if (kind) q = q.eq("kind", kind);
-  const { data, error } = await q;
-  if (error) throw new Error(`posts lookup failed: ${error.message}`);
-  return (data ?? []) as Post[];
+export async function getPosts(tenant: Tenant, kind?: Post["kind"], limit = 12): Promise<Post[]> {
+  const cached = unstable_cache(
+    async (): Promise<Post[]> => {
+      let q = db()
+        .from("vitrina_posts")
+        .select("id, kind, title, body, cover_url, published_at")
+        .eq("tenant_id", tenant.id)
+        .not("published_at", "is", null)
+        .order("published_at", { ascending: false })
+        .limit(limit);
+      if (kind) q = q.eq("kind", kind);
+      const { data, error } = await q;
+      if (error) throw new Error(`posts lookup failed: ${error.message}`);
+      return (data ?? []) as Post[];
+    },
+    ["vitrina-posts", tenant.id, kind ?? "all", String(limit)],
+    { tags: [tenantTag(tenant.slug)], revalidate: CACHE_TTL_SECONDS }
+  );
+  return cached();
 }
 
-export async function getPost(tenantId: string, id: string): Promise<Post | null> {
-  const { data, error } = await db()
-    .from("vitrina_posts")
-    .select("id, kind, title, body, cover_url, published_at")
-    .eq("tenant_id", tenantId)
-    .eq("id", id)
-    .not("published_at", "is", null)
-    .maybeSingle();
-  if (error) throw new Error(`post lookup failed: ${error.message}`);
-  return (data as Post) ?? null;
+export async function getPost(tenant: Tenant, id: string): Promise<Post | null> {
+  const cached = unstable_cache(
+    async (): Promise<Post | null> => {
+      const { data, error } = await db()
+        .from("vitrina_posts")
+        .select("id, kind, title, body, cover_url, published_at")
+        .eq("tenant_id", tenant.id)
+        .eq("id", id)
+        .not("published_at", "is", null)
+        .maybeSingle();
+      if (error) throw new Error(`post lookup failed: ${error.message}`);
+      return (data as Post) ?? null;
+    },
+    ["vitrina-post", tenant.id, id],
+    { tags: [tenantTag(tenant.slug)], revalidate: CACHE_TTL_SECONDS }
+  );
+  return cached();
 }
 
 /** Resolve the effective locale for a request ("_" = tenant default). */

@@ -3,8 +3,6 @@ import Link from "next/link";
 import { getTenant, getPosts, resolveLocale, pick, localePath } from "@/lib/tenant";
 import { ui } from "@/lib/ui-strings";
 
-export const dynamic = "force-dynamic";
-
 export default async function NewsList({
   params,
 }: {
@@ -17,7 +15,7 @@ export default async function NewsList({
   if (!locale) notFound();
   const t = ui(locale);
 
-  const posts = await getPosts(tenant.id, undefined, 30);
+  const posts = await getPosts(tenant, undefined, 30);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">

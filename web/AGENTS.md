@@ -38,6 +38,20 @@ extracted 1:1 into the real `aspira-web` repo once the owner creates it
    partner NETWORK that routes leads to centers/teachers — connect, never
    compete.
 
+## Caching (ecosystem playbook — t100u docs/CACHING_PLAYBOOK.md, bus row #54)
+- L1/L2 (live): all tenant reads go through `unstable_cache` tagged
+  `tenant:{slug}` (`tenantTag()` in `src/lib/tenant.ts`), 5-min TTL fallback.
+  Every CMS/pipeline write MUST call `revalidateTag(tenantTag(slug))` — pages
+  then regenerate only when the tenant's content changes. Planned: migrate to
+  `cacheComponents` + `"use cache"`/`cacheTag` during the template design
+  sprint (keep tag names identical).
+- L3 (pipeline, when built): ALL generation steps (palette, brochure parse,
+  site copy, translations) read through `public.t100u_ai_cache` keyed by
+  sha256(model+system+prompt+params), app='vitrina' — re-running a wizard is
+  ~free; unchanged text is never re-translated. No PII in cached values.
+- L4: generation prompts keep the big stable prefix byte-stable with
+  `cache_control: ephemeral`; per-tenant facts go last.
+
 ## Sync bus
 `public.t100u_ecosystem_sync` in the shared Supabase; this app's code is
 `vitrina` (internal only, never public). Sync on start of substantive work,

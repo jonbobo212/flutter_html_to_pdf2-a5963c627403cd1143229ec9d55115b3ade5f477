@@ -3,8 +3,6 @@ import { getTenant, resolveLocale, pick } from "@/lib/tenant";
 import { ui } from "@/lib/ui-strings";
 import { LeadForm } from "@/components/lead-form";
 
-export const dynamic = "force-dynamic";
-
 export default async function ContactPage({
   params,
 }: {

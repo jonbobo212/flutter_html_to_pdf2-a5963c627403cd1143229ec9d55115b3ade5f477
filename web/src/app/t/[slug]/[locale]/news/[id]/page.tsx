@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTenant, getPost, resolveLocale, pick } from "@/lib/tenant";
 
-export const dynamic = "force-dynamic";
-
 export default async function NewsPost({
   params,
 }: {
@@ -14,7 +12,7 @@ export default async function NewsPost({
   const locale = resolveLocale(tenant, rawLocale);
   if (!locale) notFound();
 
-  const post = await getPost(tenant.id, id);
+  const post = await getPost(tenant, id);
   if (!post) notFound();
 
   return (

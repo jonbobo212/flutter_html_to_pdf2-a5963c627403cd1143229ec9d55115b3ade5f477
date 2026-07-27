@@ -3,8 +3,6 @@ import Link from "next/link";
 import { getTenant, getSections, getPosts, resolveLocale, pick, localePath, type L10n } from "@/lib/tenant";
 import { ui } from "@/lib/ui-strings";
 
-export const dynamic = "force-dynamic";
-
 /**
  * Tenant home — School template v0 (walking skeleton, design sprint follows).
  * Renders hero + about from vitrina_sections, then latest news/achievements.
@@ -23,9 +21,9 @@ export default async function TenantHome({
   const t = ui(locale);
 
   const [sections, news, achievements] = await Promise.all([
-    getSections(tenant.id, "home"),
-    getPosts(tenant.id, "news", 3),
-    getPosts(tenant.id, "achievement", 3),
+    getSections(tenant, "home"),
+    getPosts(tenant, "news", 3),
+    getPosts(tenant, "achievement", 3),
   ]);
 
   const hero = sections.find((s) => s.kind === "hero");

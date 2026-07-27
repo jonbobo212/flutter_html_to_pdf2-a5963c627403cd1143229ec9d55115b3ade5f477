@@ -5,8 +5,6 @@ import { getTenant, resolveLocale, localePath } from "@/lib/tenant";
 import { ui, LOCALE_NAMES } from "@/lib/ui-strings";
 import { badgeUrl } from "@/lib/badge";
 
-export const dynamic = "force-dynamic";
-
 interface Params {
   slug: string;
   locale: string;
