@@ -57,11 +57,22 @@ extracted 1:1 into the real `aspira-web` repo once the owner creates it
 `vitrina` (internal only, never public). Sync on start of substantive work,
 ack processed rows, post status after significant work with ref=commit.
 
-## Current state (Phase 0 walking skeleton)
+## Current state (Phase 0)
 - Schema migration `vitrina_core_schema` applied (tenants/sections/posts/
   media/staff/courses/testimonials/admins/intakes/leads + RLS).
 - Tenant runtime: hostname routing, brand CSS vars, School template v0
-  (home/news/news-detail/contact + lead form → vitrina_leads).
-- NOT YET: template design sprint (the craft pass), admin CMS,
-  translate-on-save, AI intake pipeline, Aplify lead forwarding, Aspira
-  classroom/T100U blocks, Vercel project + wildcard DNS (blocked on owner).
+  (home/news/news-detail/contact + lead form → vitrina_leads), per-tenant
+  data caching with `tenant:{slug}` tags.
+- Admin CMS v1: token-gated `/admin?t={token}` (`src/lib/admin-auth.ts`,
+  VITRINA_ADMIN_SECRET HMAC — Aspira class-board pattern; Supabase-auth
+  members are Phase 1). Post news/achievement/announcement → translate-on-
+  save (Haiku `claude-haiku-4-5` via `src/lib/translate.ts`, byte-stable
+  system prompt + cache_control, read-through `t100u_ai_cache` L3) →
+  `revalidateTag(tenantTag, {expire: 0})`. Degrades without
+  ANTHROPIC_API_KEY: publishes source locale, `machine_locales` empty for
+  later backfill.
+- NOT YET: template design sprint (the craft pass), media upload, AI intake
+  pipeline (wizard/palette/brochure), Aplify lead forwarding, Aspira
+  classroom/T100U blocks, Vercel project + wildcard DNS (blocked on owner),
+  extraction to the aspira-web repo (blocked on session repo-access
+  approval).
