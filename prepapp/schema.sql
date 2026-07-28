@@ -486,6 +486,10 @@ alter table unlocks           add constraint unlocks_student_id_fkey foreign key
 create index achievements_student_idx on public.achievements using btree (student_id, created_at desc);
 create index achievements_type_code_idx on public.achievements using btree (type_code);
 create index activity_log_student_idx on public.activity_log using btree (student_id, created_at desc);
+create index activity_log_student_kind_idx on public.activity_log using btree (student_id, kind);
+create index opportunities_t100u_slug_idx on public.opportunities using btree (t100u_slug) where (t100u_slug is not null);
+create index opportunities_world_rank_idx on public.opportunities using btree (world_rank) where (world_rank is not null);
+create index opportunities_country_code_idx on public.opportunities using btree (country_code, active);
 create index ai_calls_created_idx on public.ai_calls using btree (created_at desc);
 create index ai_calls_purpose_idx on public.ai_calls using btree (purpose, model);
 create index ai_calls_student_id_idx on public.ai_calls using btree (student_id);
@@ -819,6 +823,18 @@ begin
     updated_at = now()
   where id = p_id;
 end; $function$;
+
+create or replace function public.get_daily_words(p_band numeric default 5.0, p_field text default null::text, p_limit integer default 10)
+ returns setof vocab_words
+ language sql security definer set search_path to 'public'
+as $function$
+  select * from vocab_words
+  where active
+    and p_band between band_min and band_max
+    and (p_field is null or field_track is null or field_track = p_field)
+  order by md5(id::text || current_date::text)
+  limit greatest(1, least(coalesce(p_limit,10), 50));
+$function$;
 
 -- ============================================================================
 -- TRIGGERS
