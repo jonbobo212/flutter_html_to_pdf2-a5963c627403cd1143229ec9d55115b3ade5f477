@@ -103,3 +103,25 @@ drop function if exists public.review_vocab(uuid, uuid, integer);
 drop function if exists public.due_vocab(uuid, numeric, text, integer);
 drop table if exists public.vocab_reviews;
 ```
+
+## 2026-07-28 — tonight's 3-feature engines
+
+Additive; power the chancing screen + daily-habit loop (verified live).
+
+17. **`fit_summary(student)`** → per-tier counts + scholarship counts
+    (verified: safe 5/5, match 92/19, reach 25/14). Powers the meter.
+18. **`fit_top(student, limit)`** → ranked top picks (match/safe first, funded
+    first). Verified: Imperial, UCL, TUM with funding text.
+19. **`daily_words_session(student, limit)`** → one call returns today's due/fresh
+    words, auto-using the student's band + current dream field.
+20. **`vocab_progress(student)`** → {due_today, learning, mastered, total_seen}
+    for a mastery bar.
+    All granted to `anon` + `authenticated`.
+
+### Rollback
+```sql
+drop function if exists public.fit_summary(uuid);
+drop function if exists public.fit_top(uuid, integer);
+drop function if exists public.daily_words_session(uuid, integer);
+drop function if exists public.vocab_progress(uuid);
+```
