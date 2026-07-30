@@ -69,3 +69,29 @@ update opportunities set country_code = null;   -- only if you truly want it bac
 
 -- dedupe + student data: NOT reversible (duplicates were true duplicates).
 ```
+
+## 2026-07-28 — feature engines (spaced repetition + chancing meter)
+
+Additive; power the UI motion prototype's Daily Words and university-fit meter.
+
+12. **`vocab_reviews` table** + `vocab_reviews_due_idx` + permissive V1 RLS
+    (anon read/insert/update) — spaced-repetition store.
+13. **`review_vocab(student, word, quality)`** — SM-2-lite scheduler; sets ease,
+    interval, reps, `due_at`; returns next due date.
+14. **`due_vocab(student, band, field, limit)`** — words due today, else fresh
+    level/field-matched words (drives the SRS queue).
+15. **`university_fit(student)`** — every active university tagged
+    safe / match / reach with band gap; powers the chancing meter. Verified:
+    a band-6.0 student → 5 safe / 101 match / 16 reach.
+    All three granted to `anon` + `authenticated`.
+
+Flagged: 84 opportunities have no `min_ielts`, so they default to `match` and
+inflate that tier. Next data fill = populate `min_ielts` (real values only).
+
+### Rollback
+```sql
+drop function if exists public.university_fit(uuid);
+drop function if exists public.review_vocab(uuid, uuid, integer);
+drop function if exists public.due_vocab(uuid, numeric, text, integer);
+drop table if exists public.vocab_reviews;
+```

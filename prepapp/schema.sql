@@ -925,3 +925,29 @@ create policy anon_insert_pending on subscriptions for insert to anon with check
 
 -- Partner suggestions: any client may submit.
 create policy partner_suggestions_insert on partner_suggestions for insert to public with check (true);
+
+-- ============================================================================
+-- 2026-07-28 FEATURE ADDITIONS (spaced repetition + university fit)
+-- ============================================================================
+
+create table vocab_reviews (
+  student_id    uuid not null references students(id) on delete cascade,
+  word_id       uuid not null references vocab_words(id) on delete cascade,
+  ease          numeric(4,2) not null default 2.5,
+  interval_days integer not null default 0,
+  reps          integer not null default 0,
+  due_at        date not null default current_date,
+  last_result   text,
+  updated_at    timestamptz not null default now(),
+  primary key (student_id, word_id)
+);
+create index vocab_reviews_due_idx on public.vocab_reviews (student_id, due_at);
+alter table vocab_reviews enable row level security;
+create policy anon_read   on vocab_reviews for select to anon using (true);
+create policy anon_insert on vocab_reviews for insert to anon with check (true);
+create policy anon_update on vocab_reviews for update to anon using (true) with check (true);
+
+-- university_fit(student) -> each active university tagged safe/match/reach (chancing meter)
+-- review_vocab(student, word, quality) -> SM-2 lite scheduler, returns next due date
+-- due_vocab(student, band, field, limit) -> words due today, else fresh level/field-matched
+-- (full bodies applied live; see DB_CHANGELOG.md 2026-07-28 for definitions)
