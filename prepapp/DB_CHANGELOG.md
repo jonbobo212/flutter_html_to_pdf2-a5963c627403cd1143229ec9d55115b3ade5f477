@@ -85,8 +85,16 @@ Additive; power the UI motion prototype's Daily Words and university-fit meter.
     a band-6.0 student → 5 safe / 101 match / 16 reach.
     All three granted to `anon` + `authenticated`.
 
-Flagged: 84 opportunities have no `min_ielts`, so they default to `match` and
-inflate that tier. Next data fill = populate `min_ielts` (real values only).
+Correction: the "84 missing" figure was `world_rank`/`country_code`, not
+`min_ielts`. Only 9 active universities lack `min_ielts`, and all 9 are
+German-taught programs that already carry `german_min_cefr` (B1/B2) — IELTS
+does not apply, so `min_ielts` is correctly null. No data fill needed.
+
+16. **`university_fit()` v2** — now dual-basis: judges by IELTS where required,
+    and by the student's German CEFR (`students.german_cefr` vs
+    `opportunities.german_min_cefr`) for German-taught programs; returns a
+    `basis` column ('ielts' | 'german'). Verified: 113 ielts / 9 german, no
+    'unknown'. (Signature changed, so it was dropped + recreated.)
 
 ### Rollback
 ```sql
