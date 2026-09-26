@@ -125,3 +125,57 @@ drop function if exists public.fit_top(uuid, integer);
 drop function if exists public.daily_words_session(uuid, integer);
 drop function if exists public.vocab_progress(uuid);
 ```
+
+## 2026-09-26 — EdPortal seats brief (mailbox row 50), items 1-7
+
+Worked German-first. Replies posted to `t100u_portal_mailbox` with
+`in_reply_to = edportal-seats-2026-09-26` (rows 52-58).
+
+21. **German A1 activated** — all 12 lessons reviewed line by line and set
+    `active=true`, stamped `reviewed_by='claude (AI language review...)'`.
+    Three content fixes first: duplicated speaker prefixes in the café
+    dialogue, "four" question words when six are taught, and missing clock
+    time in "Days & telling time".
+22. **`lesson_quiz_results`** table (+RLS, `passed` generated at >=70%).
+23. **`recompute_german_cefr(student)`** — unit cleared when every active
+    lesson passes; level cleared when all its units clear; highest level
+    contiguous from A1. Never downgrades; auto-extends when A2+ is authored.
+24. **`record_lesson_quiz(student, lesson, score, total)`** — best-score
+    upsert, attempt count, `activity_log` kind `lesson_quiz`, re-evaluates level.
+25. **German placement** — `de_placement_questions` (16 authored items, A1-B2),
+    RLS on with **no anon policy** so the answer key never reaches the client;
+    `get_german_placement()` (no answers) + `score_german_placement()` (scores
+    server-side, sets `german_cefr` authoritatively).
+26. **`trg_sync_current_band`** on `assessments` — placement retakes update
+    `students.current_band` structurally, not via client code.
+27. **`recommended_playlists(student)`** — seat-plan driven; below 6.0 or
+    unplaced starts at `en-ielts-5-6`; German before English when it applies.
+28. **Sources filled** — all 37 playlist items had `source=null`; each now
+    names its publisher (rule 7).
+29. **`link_checks`** + `links_to_check()` + `record_link_check()` — 29 external
+    URLs registered so a Vercel cron can verify them from real egress.
+30. **`seat_progress(partner, external_id)`** (incl. `days_inactive`) and
+    **`seat_nudge_candidates(days)`** — respects `notify_opt_out`.
+
+All verified with throwaway students/seats; every test row deleted.
+
+### Rollback
+```sql
+drop trigger if exists trg_sync_current_band on public.assessments;
+drop function if exists public.sync_current_band();
+drop function if exists public.recommended_playlists(uuid);
+drop function if exists public.seat_progress(text, text);
+drop function if exists public.seat_nudge_candidates(integer);
+drop function if exists public.links_to_check();
+drop function if exists public.record_link_check(text, integer, text);
+drop function if exists public.get_german_placement();
+drop function if exists public.score_german_placement(uuid, jsonb);
+drop function if exists public.record_lesson_quiz(uuid, uuid, integer, integer);
+drop function if exists public.recompute_german_cefr(uuid);
+drop table if exists public.link_checks;
+drop table if exists public.de_placement_questions;
+drop table if exists public.lesson_quiz_results;
+-- de-activate A1 again if the AI review is rejected:
+-- update lessons set active=false, reviewed_by=null, reviewed_at=null
+--   where language='de' and cefr_level='A1';
+```
