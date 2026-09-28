@@ -130,6 +130,18 @@ Run the nudge by hand:
 curl https://www.aspira.study/api/cron/nudge -H "Authorization: Bearer <CRON_SECRET>"
 ```
 
+> **This endpoint sends real Telegram messages to every eligible student.** It
+> is not a health check. Never poll it, and never put it in a retry loop — one
+> call is one broadcast. To check whether a deploy is live, hit
+> `/api/telegram/setup` (read-only) instead. To exercise it safely, mute
+> recipients first:
+> `update students set notify_opt_out = true where telegram_id is not null;`
+> and set them back afterwards.
+
+The same run also sweeps link tokens whose expiry is more than a day old —
+`/account` mints one per page view, so unclicked rows would otherwise
+accumulate. The response reports `tokens_swept`.
+
 ## Verified 2026-09-28, against production
 
 | Check | Result |
