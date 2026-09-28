@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "mcp__Supabase",
+      "mcp__Supabase__execute_sql",
+      "mcp__Supabase__apply_migration",
+      "mcp__Supabase__list_projects",
+      "mcp__Supabase__get_advisors",
+      "mcp__Vercel",
+      "mcp__github",
+      "mcp__Claude_Code_Remote",
+      "Bash",
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch"
+    ]
+  },
+  "enableAllProjectMcpServers": true
+}
