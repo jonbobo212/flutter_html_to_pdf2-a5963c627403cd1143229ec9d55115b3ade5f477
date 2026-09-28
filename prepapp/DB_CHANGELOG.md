@@ -179,3 +179,37 @@ drop table if exists public.lesson_quiz_results;
 -- update lessons set active=false, reviewed_by=null, reviewed_at=null
 --   where language='de' and cefr_level='A1';
 ```
+
+## 2026-09-28 — Telegram deep-link login (`tg_link_tokens`)
+
+Telegram login had never worked: `oauth.telegram.org` answered **"Bot domain
+invalid"** because the bot's login domain was never registered with BotFather,
+and 0 of 25 students had a `telegram_id`. Reminders had never fired either —
+`CRON_SECRET` did not exist in Vercel, so `/api/cron/nudge` returned 503 daily.
+
+Login moved off the Login Widget onto the bot's deep link, where pressing Start
+IS the login. That needs no registered domain, works inside the Capacitor
+webview, and guarantees the bot chat is open — which is what makes the daily
+nudge deliverable at all. Full write-up: `prepapp/TELEGRAM.md`.
+
+31. **`tg_link_tokens`** — one-time deep-link tokens. RLS on with **no
+    policies** and anon/authenticated grants revoked, so only the service role
+    in `app/api/telegram/*` can touch it. Two hashed secrets per attempt:
+    `token_hash` (travels in the t.me link, so treated as publicly visible) and
+    `poll_hash` (never leaves the device, and is what authorises reading back
+    the linked student id). Deliberately **not** `signin_tokens` — a token seen
+    in a Telegram chat must never be redeemable at `/api/auth/link` as a full
+    sign-in credential.
+32. `student_id` made **nullable**: `/login` on a new phone has no account yet,
+    and the token exists precisely to recover the one behind that Telegram id.
+    `resolved_student_id` records who the device became; `outcome` is one of
+    `linked` / `recovered` / `no_account` / `failed`.
+
+Verified against production with a throwaway student and a fake telegram id —
+link, replay rejection, new-device recovery, `/stop`, `/resume`, and the cron.
+Every test row deleted afterwards (back to 25 students, 0 tokens).
+
+### Rollback
+```sql
+drop table if exists public.tg_link_tokens;
+```
